@@ -1,0 +1,11 @@
+{
+    "action": "add",
+    "processes": [
+        {
+            "processId": "add_1",
+            "first": "1",
+            "second": "2",
+            "mappedFunc": "action.add"
+        }
+    ]
+}
