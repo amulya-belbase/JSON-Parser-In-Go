@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"json_parser/actions"
 	"json_parser/cache"
-	"strconv"
+	"json_parser/utils"
 )
 
 func ResolveWithActionProcessID(action, processId string) interface{} {
@@ -22,20 +22,55 @@ func ResolveWithActionProcessID(action, processId string) interface{} {
 	return fmt.Sprintf("process '%s' not found", processId)
 }
 
-func ResolveMappedFunc(mappedFunc, first, second string) interface{} {
+func ResolveMappedFunc(mappedFunc string, args ...interface{}) interface{} {
 	fn, exists := actions.MappedFuncActions[mappedFunc]
 	if !exists {
 		return fmt.Sprintf("mapped function '%s' not found", mappedFunc)
 	}
 
-	// string to int
-	a, err1 := strconv.Atoi(first)
-	b, err2 := strconv.Atoi(second)
-	if err1 != nil || err2 != nil {
-		return fmt.Sprintf("invalid number inputs: %s, %s", first, second)
+	return castFunction(fn, args)
+}
+
+func castFunction(fn interface{}, args []interface{}) interface{} {
+	argsLen := len(args)
+
+	// perform type assertions based on expected function signatures
+	// can add more function signature checks if needed
+	if f, ok := fn.(func(int, int) int); ok {
+		if argsLen != 2 {
+			return fmt.Sprintf("expected 2 arguments, got %d", argsLen)
+		}
+
+		a, err := utils.ConvertToInt(args[0])
+		if err != nil {
+			return fmt.Sprintf("invalid first argument: %v. error: %v", args[0], err)
+		}
+
+		b, err := utils.ConvertToInt(args[1])
+		if err != nil {
+			return fmt.Sprintf("invalid second argument: %v. error: %v", args[1], err)
+		}
+
+		return f(a, b)
 	}
 
-	// execute the function
-	result := fn(a, b)
-	return result
+	if f, ok := fn.(func(string, string) string); ok {
+		if argsLen != 2 {
+			return fmt.Sprintf("expected 2 arguments, got %d", argsLen)
+		}
+
+		a, err := utils.ConvertToString(args[0])
+		if err != nil {
+			return fmt.Sprintf("invalid first argument: %v. error: %v", args[0], err)
+		}
+
+		b, err := utils.ConvertToString(args[1])
+		if err != nil {
+			return fmt.Sprintf("invalid second argument: %v. error: %v", args[1], err)
+		}
+
+		return f(a, b)
+	}
+
+	return fmt.Sprintf("invalid function signature: %v", fn)
 }

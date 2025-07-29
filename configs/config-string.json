@@ -1,0 +1,11 @@
+{
+    "action": "string",
+    "processes": [
+        {
+            "processId": "concat",
+            "first": "john",
+            "second": "doe",
+            "mappedFunc": "action.string_concat"
+        }
+    ]
+}

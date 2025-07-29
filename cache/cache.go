@@ -10,10 +10,10 @@ import (
 
 // define the strucutre of proceses inside json files
 type Process struct {
-	ProcessId  string `json:"processId"`
-	First      string `json:"first"`
-	Second     string `json:"second"`
-	MappedFunc string `json:"mappedFunc"`
+	ProcessId  string      `json:"processId"`
+	First      interface{} `json:"first"`
+	Second     interface{} `json:"second"`
+	MappedFunc string      `json:"mappedFunc"`
 }
 
 // individual json file structure
