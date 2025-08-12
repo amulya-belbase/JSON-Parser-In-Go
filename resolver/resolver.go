@@ -36,7 +36,7 @@ func ResolveMappedFunc(mappedFunc string, args ...interface{}) interface{} {
 }
 
 func ResolvePredicate(predicate string, val interface{}) interface{} {
-	// need to parse the predicate that is based on list-like syntax
+	// TODO: need to parse the predicate that is based on lisp-like syntax
 	// parsedPredicate := parsePredicate(predicate)
 	fn, exists := utils.PredicateMapFuncs[predicate]
 	if !exists {
