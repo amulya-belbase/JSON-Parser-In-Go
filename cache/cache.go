@@ -14,6 +14,7 @@ type Process struct {
 	First      interface{} `json:"first"`
 	Second     interface{} `json:"second"`
 	MappedFunc string      `json:"mappedFunc"`
+	Predicate  string      `json:"predicate,omitempty"`
 }
 
 // individual json file structure

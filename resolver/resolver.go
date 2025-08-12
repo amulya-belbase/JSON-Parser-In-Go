@@ -15,7 +15,11 @@ func ResolveWithActionProcessID(action, processId string) interface{} {
 
 	for _, process := range actionData.Processes {
 		if process.ProcessId == processId {
-			return ResolveMappedFunc(process.MappedFunc, process.First, process.Second)
+			val := ResolveMappedFunc(process.MappedFunc, process.First, process.Second)
+			// if process.Predicate != "" {
+			// 	val = ResolvePredicate(process.Predicate, val)
+			// }
+			return val
 		}
 	}
 
@@ -29,6 +33,17 @@ func ResolveMappedFunc(mappedFunc string, args ...interface{}) interface{} {
 	}
 
 	return castFunction(fn, args)
+}
+
+func ResolvePredicate(predicate string, val interface{}) interface{} {
+	// need to parse the predicate that is based on list-like syntax
+	// parsedPredicate := parsePredicate(predicate)
+	fn, exists := utils.PredicateMapFuncs[predicate]
+	if !exists {
+		return fmt.Sprintf("predicate '%s' not found", predicate)
+	}
+
+	return castFunction(fn, []interface{}{val})
 }
 
 func castFunction(fn interface{}, args []interface{}) interface{} {
@@ -70,6 +85,19 @@ func castFunction(fn interface{}, args []interface{}) interface{} {
 		}
 
 		return f(a, b)
+	}
+
+	if f, ok := fn.(func(int) bool); ok {
+		if argsLen != 1 {
+			return fmt.Sprintf("expected 1 argument, got %d", argsLen)
+		}
+
+		a, err := utils.ConvertToInt(args[0])
+		if err != nil {
+			return fmt.Sprintf("invalid first argument: %v. error: %v", args[0], err)
+		}
+
+		return f(a)
 	}
 
 	return fmt.Sprintf("invalid function signature: %v", fn)

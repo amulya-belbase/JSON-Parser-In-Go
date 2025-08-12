@@ -5,7 +5,8 @@
             "processId": "add_1",
             "first": 1,
             "second": 2,
-            "mappedFunc": "action.add"
+            "mappedFunc": "action.add",
+            "predicate": "{{.is_odd_or_even}}"
         }
     ]
 }

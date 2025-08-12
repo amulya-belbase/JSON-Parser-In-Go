@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// send action & processId to resolver
-	resolverData := resolver.ResolveWithActionProcessID("sub", "sub_1")
+	resolverData := resolver.ResolveWithActionProcessID("add", "add_1")
 
 	// get the resolver data back
 	fmt.Println("Resolved data: ", resolverData)
