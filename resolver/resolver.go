@@ -5,6 +5,7 @@ import (
 	"json_parser/actions"
 	"json_parser/cache"
 	"json_parser/utils"
+	"strings"
 )
 
 func ResolveWithActionProcessID(action, processId string) interface{} {
@@ -16,9 +17,11 @@ func ResolveWithActionProcessID(action, processId string) interface{} {
 	for _, process := range actionData.Processes {
 		if process.ProcessId == processId {
 			val := ResolveMappedFunc(process.MappedFunc, process.First, process.Second)
-			// if process.Predicate != "" {
-			// 	val = ResolvePredicate(process.Predicate, val)
-			// }
+			if process.Predicate != "" {
+				res := ResolvePredicate(process.Predicate, val)
+				// TODO: use template engine to evaluate predicate check
+				fmt.Println("Evaluated predicate: ", res)
+			}
 			return val
 		}
 	}
@@ -36,14 +39,54 @@ func ResolveMappedFunc(mappedFunc string, args ...interface{}) interface{} {
 }
 
 func ResolvePredicate(predicate string, val interface{}) interface{} {
-	// TODO: need to parse the predicate that is based on lisp-like syntax
-	// parsedPredicate := parsePredicate(predicate)
-	fn, exists := utils.PredicateMapFuncs[predicate]
-	if !exists {
-		return fmt.Sprintf("predicate '%s' not found", predicate)
+	// parse lisp-like predicate
+	parsedPredicateMap := parsePredicates(predicate)
+
+	for k, _ := range parsedPredicateMap {
+		fn, exists := utils.PredicateMapFuncs[k]
+		if !exists {
+			return fmt.Sprintf("predicate function '%s' not found", k)
+		}
+
+		parsedPredicateMap[k] = castFunction(fn, []interface{}{val})
 	}
 
-	return castFunction(fn, []interface{}{val})
+	return parsedPredicateMap
+}
+
+func parsePredicates(predicate string) map[string]interface{} {
+	parsedMap := make(map[string]interface{})
+
+	// trim all the syntactical garbage
+	rc := strings.TrimPrefix(predicate, "{{")
+	rc = strings.TrimSuffix(rc, "}}")
+	rc = strings.ReplaceAll(rc, "(", "")
+	rc = strings.ReplaceAll(rc, ")", "")
+
+	for i := 0; i < len(rc); i++ {
+		// . is an indicator of a function
+		if rc[i] == '.' {
+			start := i + 1
+
+			// get function name from . index to next space index
+			end := strings.IndexByte(rc[start:], ' ')
+			if end == -1 {
+				// -1 indicates the end of the string
+				end = len(rc)
+			} else {
+				// adjust substring index to original string
+				end += start
+			}
+
+			// get the func name
+			variable := rc[start:end]
+			parsedMap[variable] = nil
+
+			// move i to the end of this variable
+			i = end - 1
+		}
+	}
+	return parsedMap
 }
 
 func castFunction(fn interface{}, args []interface{}) interface{} {
